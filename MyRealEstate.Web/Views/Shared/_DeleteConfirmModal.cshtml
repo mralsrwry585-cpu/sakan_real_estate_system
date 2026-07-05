@@ -1,0 +1,27 @@
+@{
+    var modalId = ViewData["ModalId"]?.ToString() ?? "deleteConfirmModal";
+    var formAction = ViewData["FormAction"]?.ToString() ?? "";
+    var itemLabel = ViewData["ItemLabel"]?.ToString() ?? "العنصر";
+}
+<div class="sakan-modal-backdrop" id="@modalId" data-modal>
+    <div class="sakan-modal">
+        <div class="modal-body-sakan">
+            <div class="d-flex align-items-start gap-3">
+                <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">
+                    <i class="bi bi-trash"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1">حذف @itemLabel؟</h5>
+                    <p class="text-muted-foreground mb-0" style="font-size: 0.75rem; line-height: 1.7;">لا يمكن التراجع عن هذا الإجراء. سيتم حذف @itemLabel نهائياً.</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer-sakan">
+            <button type="button" class="btn btn-outline" data-modal-close>إلغاء</button>
+            <form method="post" action="@formAction" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-danger">نعم، احذف</button>
+            </form>
+        </div>
+    </div>
+</div>

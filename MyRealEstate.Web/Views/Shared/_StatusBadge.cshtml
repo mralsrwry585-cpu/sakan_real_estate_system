@@ -1,0 +1,5 @@
+@{
+    var text = ViewData["Text"]?.ToString() ?? string.Empty;
+    var tone = ViewData["Tone"]?.ToString() ?? "neutral";
+}
+<span class="badge-status badge-status-@tone">@text</span>
