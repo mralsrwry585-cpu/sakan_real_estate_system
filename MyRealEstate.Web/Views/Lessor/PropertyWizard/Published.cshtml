@@ -1,0 +1,36 @@
+@model string
+@{
+    Layout = "_LayoutLessor";
+    ViewData["Title"] = "تم النشر";
+    ViewData["PageTitle"] = "تم نشر عقارك 🎉";
+    ViewData["PageSubtitle"] = "تم نشر عقارك بنجاح وسيظهر في القائمة فوراً";
+}
+
+<div class="mx-auto" style="max-width: 520px;">
+    <div class="card-sakan overflow-hidden">
+        <div class="gradient-primary text-primary-foreground p-6 text-center">
+            <div class="mx-auto d-flex align-items-center justify-content-center rounded-circle bg-white d-flex align-items-center justify-content-center"
+                 style="width: 64px; height: 64px; background: rgba(255,255,255,0.2);">
+                <i class="bi bi-check-lg" style="font-size: 1.8rem;"></i>
+            </div>
+            <h3 class="fw-bold mt-3 mb-1">تم إرسال العقار للمراجعة 🎉</h3>
+            <p class="opacity-80 mb-0" style="font-size: 0.75rem; line-height: 1.8;">سيقوم فريق سكن بمراجعة عقارك خلال 24 ساعة.</p>
+        </div>
+        <div class="p-4 d-flex flex-column gap-3">
+            <div class="rounded-3 bg-muted p-3 d-flex flex-column gap-1" style="font-size: 0.75rem;">
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted-foreground">رقم المرجع</span>
+                    <span class="fw-bold text-foreground ltr">#@Model</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted-foreground">الحالة</span>
+                    <span class="badge-status badge-status-warning">قيد المراجعة</span>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/owner/properties" class="btn btn-outline flex-fill">عرض عقاراتي</a>
+                <a href="/owner/properties/new" class="btn btn-primary flex-fill fw-bold">إضافة عقار آخر</a>
+            </div>
+        </div>
+    </div>
+</div>

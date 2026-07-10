@@ -1,0 +1,210 @@
+@model MyRealEstate.Web.Models.Lessor.PropertyListViewModel
+@using MyRealEstate.Web.Helpers
+@{
+    Layout = "_LayoutLessor";
+    ViewData["Title"] = "عقاراتي";
+    ViewData["PageTitle"] = "عقاراتي";
+    ViewData["PageSubtitle"] = "إدارة كاملة لجميع عقاراتك";
+    ViewData["TopbarAction"] = $"<a href=\"/owner/properties/new\" class=\"btn btn-primary btn-sm fw-bold d-inline-flex align-items-center gap-1\"><i class=\"bi bi-plus-lg\"></i> عقار جديد</a>";
+    var baseUrl = Url.Action("Index", "Properties") ?? "/owner/properties";
+}
+
+<div class="d-flex flex-column gap-4">
+    <!-- Toolbar: filters + view toggle -->
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        @foreach (var f in Model.Filters)
+        {
+            <a href="@f.Link" class="filter-pill @(f.IsActive ? "active" : "")">@f.Label <span class="opacity-75">(@f.Count)</span></a>
+        }
+
+        <div class="ms-auto d-flex gap-2 align-items-center">
+            <form method="get" action="@baseUrl" class="d-flex gap-2 align-items-center">
+                <input type="hidden" name="status" value="@((int?)Model.ActiveStatus)" />
+                <div class="search-box d-none d-md-flex" style="width: 220px;">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="q" value="@Model.SearchTerm" placeholder="ابحث في عقاراتك..." />
+                </div>
+                <button class="btn btn-outline btn-sm"><i class="bi bi-funnel me-1"></i> فلاتر</button>
+            </form>
+            <div class="btn-group btn-group-sm" role="group">
+                <a href="@(baseUrl + BuildQuery(Model, grid: false))" class="btn @(Model.ShowGrid ? "btn-outline" : "btn-primary") fw-bold"><i class="bi bi-table me-1"></i>جدول</a>
+                <a href="@(baseUrl + BuildQuery(Model, grid: true))" class="btn @(Model.ShowGrid ? "btn-primary" : "btn-outline") fw-bold"><i class="bi bi-grid me-1"></i>شبكة</a>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="card-sakan">
+            @await Html.PartialAsync("_EmptyState", new ViewDataDictionary(ViewData)
+            {
+            ["Icon"] = "bi-buildings",
+                ["Title"] = "لا توجد عقارات",
+                ["Message"] = "لم يتم العثور على عقارات مطابقة. أضف عقارك الأول الآن."
+                })
+        </div>
+    }
+    else if (Model.ShowGrid)
+    {
+        <!-- Grid view -->
+        <div class="row g-4">
+            @foreach (var item in Model.Items)
+            {
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card-sakan overflow-hidden h-100">
+                        <div class="position-relative">
+                            @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                            {
+                                <img src="@item.ImageUrl" class="w-100" style="height: 180px; object-fit: cover;" alt="@item.Title" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="w-100 bg-muted d-flex align-items-center justify-content-center" style="height: 180px;">
+                                    <i class="bi bi-buildings text-muted-foreground" style="font-size: 2.5rem;"></i>
+                                </div>
+                            }
+                            <span class="position-absolute top-0 start-0 m-2"><span class="badge-status badge-status-@item.Tone">@item.Status</span></span>
+                        </div>
+                        <div class="p-3">
+                            <div class="fw-bold text-foreground" style="font-size: 0.85rem;">@item.Title</div>
+                            <div class="d-flex align-items-center gap-2 mt-2">
+                                <span class="badge-status badge-status-@item.ContractTone">@item.Contract</span>
+                                <span class="text-muted-foreground" style="font-size: 0.72rem;">@item.Type</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between mt-3">
+                                <span class="fw-bold text-primary" style="font-size: 0.95rem;">@item.Price <span class="text-muted-foreground" style="font-size: 0.7rem;">ر.س</span></span>
+                                <span class="text-muted-foreground d-flex align-items-center gap-1" style="font-size: 0.72rem;"><i class="bi bi-eye"></i>@item.Views</span>
+                            </div>
+                            <div class="d-flex gap-2 mt-3 border-top border-border pt-3">
+                                <a href="/owner/properties/@item.Id" class="btn btn-outline btn-sm flex-fill"><i class="bi bi-eye me-1"></i>عرض</a>
+                                <a href="/owner/properties/@item.Id/media" class="btn btn-outline btn-sm" title="إدارة الوسائط"><i class="bi bi-images"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- Table view -->
+        <div class="card-sakan overflow-hidden">
+            <div class="table-responsive">
+                <table class="table-sakan" id="propertiesTable">
+                    <thead>
+                        <tr>
+                            <th class="w-8"><input type="checkbox" class="form-check-input" /></th>
+                            <th>العقار</th>
+                            <th>النوع</th>
+                            <th>العقد</th>
+                            <th>السعر (ر.س)</th>
+                            <th>المشاهدات</th>
+                            <th>الحالة</th>
+                            <th class="text-start">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td><input type="checkbox" class="form-check-input" /></td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                                        {
+                                            <img src="@item.ImageUrl" class="rounded-3" style="width: 56px; height: 42px; object-fit: cover;" alt="" loading="lazy" />
+                                        }
+                                        else
+                                        {
+                                            <div class="rounded-3 bg-muted d-flex align-items-center justify-content-center" style="width: 56px; height: 42px;"><i class="bi bi-buildings text-muted-foreground"></i></div>
+                                        }
+                                        <a href="/owner/properties/@item.Id" class="fw-bold text-foreground" style="font-size: 0.8rem;">@item.Title</a>
+                                    </div>
+                                </td>
+                                <td class="text-muted-foreground">@item.Type</td>
+                                <td><span class="badge-status badge-status-@item.ContractTone">@item.Contract</span></td>
+                                <td class="fw-bold text-foreground">@item.Price</td>
+                                <td class="text-muted-foreground">@item.Views</td>
+                                <td><span class="badge-status badge-status-@item.Tone">@item.Status</span></td>
+                                <td class="text-start">
+                                    <div class="d-inline-flex gap-1">
+                                        <a href="/owner/properties/@item.Id" class="btn btn-icon" title="عرض"><i class="bi bi-eye"></i></a>
+                                        <a href="/owner/properties/@item.Id/media" class="btn btn-icon" title="الوسائط"><i class="bi bi-images"></i></a>
+                                        <button type="button" class="btn btn-icon text-danger-hover" title="حذف"
+                                                data-open-modal="deleteModal-@item.Id"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Model.TotalPages > 1)
+            {
+                <div class="d-flex align-items-center justify-content-between px-4 py-3 border-top border-border" style="font-size: 0.75rem; color: var(--muted-foreground);">
+                    <span>عرض @Model.Items.Count من @Model.TotalCount</span>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            @if (Model.HasPreviousPage)
+                            {
+                                <li class="page-item"><a class="page-link" href="@(baseUrl + BuildQuery(Model, page: Model.PageNumber - 1))">السابق</a></li>
+                            }
+                            @for (var i = 1; i <= Model.TotalPages; i++)
+                            {
+                                <li class="page-item @(i == Model.PageNumber ? "active" : "")"><a class="page-link" href="@(baseUrl + BuildQuery(Model, page: i))">@i</a></li>
+                            }
+                            @if (Model.HasNextPage)
+                            {
+                                <li class="page-item"><a class="page-link" href="@(baseUrl + BuildQuery(Model, page: Model.PageNumber + 1))">التالي</a></li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@foreach (var item in Model.Items)
+{
+    @await Html.PartialAsync("_DeleteConfirmModal", new ViewDataDictionary(ViewData)
+    {
+        { "ModalId", $"deleteModal-{item.Id}" },
+        { "FormAction", $"/owner/properties/delete/{item.Id}" },
+        { "ItemLabel", "العقار" }
+    })
+}
+
+@section Scripts {
+    <script>
+        // Minimal DataTables init for the properties table (RTL + Arabic)
+        document.addEventListener('DOMContentLoaded', function () {
+            var el = document.getElementById('propertiesTable');
+            if (el && window.jQuery && window.jQuery.fn && window.jQuery.fn.DataTable && el.querySelectorAll('tbody tr').length > 0) {
+                jQuery(el).DataTable({
+                    language: {
+                        url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/ar.json'
+                    },
+                    dom: 'rt<"d-flex justify-content-between align-items-center mt-3"ip>',
+                    paging: false,
+                    info: false,
+                    searchable: false,
+                    order: []
+                });
+            }
+        });
+    </script>
+}
+
+@functions {
+    private string BuildQuery(MyRealEstate.Web.Models.Lessor.PropertyListViewModel m, bool grid = false, int? page = null)
+    {
+        var parts = new List<string>();
+        if (m.ActiveStatus is not null) parts.Add($"status={(int)m.ActiveStatus}");
+        if (!string.IsNullOrWhiteSpace(m.SearchTerm)) parts.Add($"q={Uri.EscapeDataString(m.SearchTerm)}");
+        if (grid) parts.Add("grid=true");
+        if (page is not null && page.Value > 1) parts.Add($"page={page.Value}");
+        return parts.Count == 0 ? "" : "?" + string.Join("&", parts);
+    }
+}

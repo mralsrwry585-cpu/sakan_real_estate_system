@@ -1,0 +1,526 @@
+@model MyRealEstate.Web.Models.Lessor.PropertyWizardViewModel
+@using MyRealEstate.Web.Helpers
+@{
+    Layout = "_LayoutLessor";
+    ViewData["Title"] = "إضافة عقار جديد";
+    ViewData["PageTitle"] = "إضافة عقار جديد";
+    ViewData["PageSubtitle"] = $"الخطوة {Model.CurrentStep} من {MyRealEstate.Web.Models.Lessor.PropertyWizardViewModel.TotalSteps}";
+    ViewData["WizardStep"] = Model.CurrentStep;
+    var step = Model.CurrentStep;
+    var formAction = $"/owner/properties/new/step/{step}";
+}
+
+<div class="mx-auto" style="max-width: 880px;">
+    @await Html.PartialAsync("_WizardStepper")
+
+    <div class="card-sakan p-4 p-md-5">
+
+        @* =================== STEP 1 — Basic info =================== *@
+        @if (step == 1)
+        {
+            <h3 class="fw-bold mb-4 text-foreground" style="font-size: 0.95rem;">البيانات الأساسية</h3>
+            <form method="post" action="@formAction">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="field-label">عنوان الإعلان *</label>
+                        <input type="text" name="Title" class="form-control-sakan" placeholder="مثال: فيلا مودرن — حي الياسمين"
+                               value="@Model.Title" required />
+                    </div>
+                    <div class="col-12">
+                        <label class="field-label">نوع العقار *</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var t in new[] { ("Land", "أرض"), ("Apartment", "شقة"), ("IndependentHouse", "منزل"), ("Villa", "فيلا"), ("Commercial", "تجاري"), ("Office", "مكتب"), ("Studio", "استوديو"), ("Duplex", "دوبلكس") })
+                            {
+                                var active = Model.PropertyType?.ToString() == t.Item1;
+                                <button type="button" class="type-chip flex-fill @(active ? "active-primary" : "")" data-type-chip data-value="@t.Item1"
+                                        style="min-width: 90px;">@t.Item2</button>
+                            }
+                        </div>
+                        <input type="hidden" name="PropertyType" id="PropertyType" value="@Model.PropertyType" />
+                    </div>
+                    <div class="col-12">
+                        <label class="field-label">نوع العقد *</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var t in new[] { ("Sale", "بيع"), ("Rent", "إيجار"), ("DailyRent", "إيجار يومي") })
+                            {
+                                var active = Model.ContractType?.ToString() == t.Item1;
+                                <button type="button" class="type-chip flex-fill @(active ? "active-gold" : "")" data-type-chip data-value="@t.Item1"
+                                        style="min-width: 120px;">@t.Item2</button>
+                            }
+                        </div>
+                        <input type="hidden" name="ContractType" id="ContractType" value="@Model.ContractType" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="field-label">السعر (ر.س) *</label>
+                        <input type="number" name="Price" class="form-control-sakan ltr" placeholder="2,450,000"
+                               value="@(Model.Price?.ToString("0") ?? "")" required />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="field-label">المساحة (م²) *</label>
+                        <input type="number" name="Area" class="form-control-sakan ltr" placeholder="420"
+                               value="@(Model.Area?.ToString("0") ?? "")" required />
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="field-label">عدد الغرف</label>
+                        <input type="number" name="Bedrooms" class="form-control-sakan ltr" placeholder="5"
+                               value="@(Model.Bedrooms?.ToString() ?? "")" />
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="field-label">عدد الحمامات</label>
+                        <input type="number" name="Bathrooms" class="form-control-sakan ltr" placeholder="4"
+                               value="@(Model.Bathrooms?.ToString() ?? "")" />
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="field-label">عدد الطوابق</label>
+                        <input type="number" name="FloorsCount" class="form-control-sakan ltr" placeholder="2"
+                               value="@(Model.FloorsCount?.ToString() ?? "")" />
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="field-label">عمر العقار (سنوات)</label>
+                        <input type="number" name="AgeYears" class="form-control-sakan ltr" placeholder="0"
+                               value="@(Model.AgeYears?.ToString() ?? "")" />
+                    </div>
+                    <div class="col-12">
+                        <label class="field-label">وصف العقار *</label>
+                        <textarea name="Description" rows="4" class="form-control-sakan" placeholder="اكتب وصفاً جذاباً للعقار..."
+                                  required>@Model.Description</textarea>
+                        <span class="field-hint">0 / 1000 حرف</span>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between border-top border-border mt-4 pt-3">
+                    <span class="text-muted-foreground" style="font-size: 0.72rem;">الحقول التي تحمل * إلزامية.</span>
+                    <a href="/owner/properties" class="btn btn-outline">حفظ كمسودة</a>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">التالي: الموقع</button>
+                </div>
+            </form>
+        }
+
+        @* =================== STEP 2 — Location =================== *@
+        @if (step == 2)
+        {
+            <h3 class="fw-bold mb-4 text-foreground" style="font-size: 0.95rem;">الموقع والعنوان</h3>
+            <form method="post" action="@formAction">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label class="field-label">المدينة *</label>
+                        <select name="City" class="form-select-sakan">
+                            <option value="">اختر المدينة</option>
+                            <option value="الرياض" selected="@(Model.City == "الرياض")">الرياض</option>
+                            <option value="جدة" selected="@(Model.City == "جدة")">جدة</option>
+                            <option value="الدمام" selected="@(Model.City == "الدمام")">الدمام</option>
+                            <option value="مكة المكرمة" selected="@(Model.City == "مكة المكرمة")">مكة المكرمة</option>
+                            <option value="المدينة المنورة" selected="@(Model.City == "المدينة المنورة")">المدينة المنورة</option>
+                            <option value="الخبر" selected="@(Model.City == "الخبر")">الخبر</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="field-label">الحي *</label>
+                        <input type="text" name="District" class="form-control-sakan" placeholder="الياسمين"
+                               value="@Model.District" required />
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="field-label">الرمز البريدي</label>
+                        <input type="text" name="PostalCode" class="form-control-sakan ltr" placeholder="13322"
+                               value="@Model.PostalCode" />
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="field-label">الشارع</label>
+                        <input type="text" name="Street" class="form-control-sakan" placeholder="شارع الأمير محمد بن سلمان"
+                               value="@Model.Street" />
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <label class="field-label">رقم المبنى</label>
+                        <input type="text" name="BuildingNumber" class="form-control-sakan ltr" placeholder="47"
+                               value="@Model.BuildingNumber" />
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <label class="field-label">الدور</label>
+                        <input type="text" name="Floor" class="form-control-sakan ltr" placeholder="—"
+                               value="@Model.Floor" />
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="field-label mb-0">حدّد الموقع على الخريطة *</span>
+                        <button type="button" class="btn btn-link btn-sm fw-bold p-0">استخدام موقعي الحالي</button>
+                    </div>
+                    <div class="map-placeholder d-flex align-items-center justify-content-center" style="min-height: 300px;">
+                        <div class="text-center text-white-50">
+                            <i class="bi bi-geo-alt-fill" style="font-size: 2.2rem; color: #dc2626; text-shadow: 0 4px 14px rgba(0,0,0,0.35);"></i>
+                            <div class="mt-2 rounded-2 bg-white bg-opacity-10 backdrop-filter px-3 py-1 d-inline-block" style="font-size: 0.72rem; font-weight: 700;" dir="ltr">
+                                24.7443° N, 46.6390° E
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-none d-md-flex justify-content-between mt-2 row g-3">
+                        <div class="col-6">
+                            <label class="field-label">خط العرض</label>
+                            <input type="number" name="Latitude" step="any" class="form-control-sakan ltr" value="@Model.Latitude" />
+                        </div>
+                        <div class="col-6">
+                            <label class="field-label">خط الطول</label>
+                            <input type="number" name="Longitude" step="any" class="form-control-sakan ltr" value="@Model.Longitude" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between border-top border-border mt-4 pt-3">
+                    <a href="/owner/properties/new/step/1" class="btn btn-outline">السابق</a>
+                    <div class="d-flex gap-2">
+                        <a href="/owner/properties" class="btn btn-outline">حفظ كمسودة</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">التالي: المرافق</button>
+                    </div>
+                </div>
+            </form>
+        }
+
+        @* =================== STEP 3 — Amenities =================== *@
+        @if (step == 3)
+        {
+            <h3 class="fw-bold mb-1 text-foreground" style="font-size: 0.95rem;">المرافق</h3>
+            <p class="text-muted-foreground mb-4" style="font-size: 0.72rem;">اختر جميع المرافق المتوفرة في العقار.</p>
+
+            <form method="post" action="@formAction">
+                @Html.AntiForgeryToken()
+                @if (Model.AmenityGroups.Count == 0)
+                {
+                    <div class="alert alert-sakan-info mb-0">
+                        <i class="bi bi-info-circle me-1"></i> تعذر تحميل قائمة المرافق حالياً. يمكنك المتابعة وستبقى المرافق فارغة.
+                    </div>
+                }
+                else
+                {
+                    foreach (var group in Model.AmenityGroups)
+                    {
+                        <div class="mb-3">
+                            <div class="field-label mb-2">@group.CategoryLabel</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var amenity in group.Items)
+                                {
+                                    var selected = amenity.IsSelected || Model.SelectedAmenityIds.Contains(amenity.Id);
+                                    <label class="filter-pill @(selected ? "active" : "")" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                                        @if (selected)
+                                        {
+                                            <i class="bi bi-check-lg"></i>
+                                        }
+                                        <input type="checkbox" name="SelectedAmenityIds" value="@amenity.Id"
+                                               style="display: none;" @(selected ? "checked" : "") />
+                                        @amenity.Name
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+
+                <div class="d-flex align-items-center justify-content-between border-top border-border mt-4 pt-3">
+                    <a href="/owner/properties/new/step/2" class="btn btn-outline">السابق</a>
+                    <div class="d-flex gap-2">
+                        <a href="/owner/properties" class="btn btn-outline">حفظ كمسودة</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">التالي: الوسائط</button>
+                    </div>
+                </div>
+            </form>
+        }
+
+        @* =================== STEP 4 — Media =================== *@
+        @if (step == 4)
+        {
+            <h3 class="fw-bold mb-3 text-foreground" style="font-size: 0.95rem;">صور وفيديوهات العقار</h3>
+
+            @if (Model.PropertyId is null)
+            {
+                <div class="alert alert-sakan-warning">لم يتم إنشاء العقار بعد. الرجاء العودة إلى الخطوة السابقة.</div>
+                <a href="/owner/properties/new/step/3" class="btn btn-outline">السابق</a>
+            }
+            else
+            {
+                <div class="upload-zone mb-4" data-upload-zone>
+                    <div class="mx-auto rounded-4 gradient-primary text-primary-foreground d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; font-size: 1.6rem;">
+                        <i class="bi bi-cloud-arrow-up"></i>
+                    </div>
+                    <h4 class="fw-bold mt-3 mb-1 text-foreground" style="font-size: 0.9rem;">اسحب الصور هنا أو اضغط للرفع</h4>
+                    <p class="text-muted-foreground mb-3" style="font-size: 0.72rem;">JPG · PNG · MP4 حتى 50 ميجابايت للملف الواحد</p>
+
+                    @* Add by URL form (fallback when direct file upload requires backend storage) *@
+                    <form method="post" action="/owner/properties/@Model.PropertyId/media/add?returnUrl=/owner/properties/new/step/4" class="d-flex gap-2 justify-content-center flex-wrap">
+                        @Html.AntiForgeryToken()
+                        <input type="text" name="Url" class="form-control-sakan" style="max-width: 360px;" placeholder="الصق رابط الصورة https://..." required />
+                        <button type="submit" class="btn btn-primary btn-sm fw-bold"><i class="bi bi-plus-lg me-1"></i>إضافة صورة</button>
+                    </form>
+                </div>
+
+                <div class="mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h4 class="fw-bold mb-0 text-foreground" style="font-size: 0.85rem;">الوسائط المرفوعة (@Model.MediaItems.Count)</h4>
+                        <span class="text-muted-foreground" style="font-size: 0.72rem;">حدد صورة الغلاف</span>
+                    </div>
+                    @if (Model.MediaItems.Count == 0)
+                    {
+                        <div class="empty-state border border-border rounded-4">
+                            <div class="empty-icon"><i class="bi bi-images"></i></div>
+                            <h4 class="fw-bold mb-0">لا توجد وسائط بعد</h4>
+                            <p class="text-muted-foreground mb-0">أضف صوراً باستخدام الرابط أعلاه (حد أدنى 5 صور للنشر).</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row g-3" data-media-grid data-property-id="@Model.PropertyId">
+                            @foreach (var m in Model.MediaItems)
+                            {
+                                <div class="col-6 col-md-4 col-lg-3" data-media-item="@m.Id">
+                                    <div class="position-relative rounded-4 overflow-hidden border border-border shadow-card group">
+                                        <img src="@m.Url" class="w-100" style="height: 140px; object-fit: cover;" alt="" loading="lazy" />
+                                        @if (m.IsCover)
+                                        {
+                                            <span class="badge-status badge-status-gold position-absolute top-0 start-0 m-2">الغلاف</span>
+                                        }
+                                        <div class="position-absolute inset-x-0 bottom-0 d-flex justify-content-between gap-1 p-2"
+                                             style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);">
+                                            @if (!m.IsCover)
+                                            {
+                                                <form method="post" action="/owner/properties/@Model.PropertyId/media/cover?returnUrl=/owner/properties/new/step/4">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="mediaId" value="@m.Id" />
+                                                    <button type="submit" class="btn btn-light btn-sm fw-bold" style="font-size: 0.65rem;">الغلاف</button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span></span>
+                                            }
+                                            <button type="button" class="btn btn-danger btn-sm fw-bold" style="font-size: 0.65rem;"
+                                                    data-open-modal="deleteMediaModal-@m.Id">حذف</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                                                                                                                                                <form method="post" action="@formAction">
+                    @Html.AntiForgeryToken()
+                    <div class="d-flex align-items-center justify-content-between border-top border-border mt-4 pt-3">
+                        <a href="/owner/properties/new/step/3" class="btn btn-outline">السابق</a>
+                        <div class="d-flex gap-2">
+                            <a href="/owner/properties" class="btn btn-outline">حفظ كمسودة</a>
+                            <button type="submit" class="btn btn-primary px-4 fw-bold">التالي: المراجعة</button>
+                        </div>
+                    </div>
+                </form>
+            }
+        }
+
+        @* =================== STEP 5 — Review & Publish =================== *@
+        @if (step == 5)
+        {
+            <div class="row g-4">
+                <div class="col-12 col-lg-8">
+                    <!-- Summary card -->
+                    <div class="card-sakan p-4 mb-4">
+                        @{
+                            var cover = Model.MediaItems.FirstOrDefault(m => m.IsCover)?.Url ?? Model.MediaItems.FirstOrDefault()?.Url;
+                        }
+                        @if (!string.IsNullOrWhiteSpace(cover))
+                        {
+                            <img src="@cover" class="w-100 rounded-4" style="height: 200px; object-fit: cover;" alt="" />
+                        }
+                        <h3 class="fw-bold mt-3 mb-1 text-foreground">@(string.IsNullOrWhiteSpace(Model.Title) ? "عقار جديد" : Model.Title)</h3>
+                        <p class="text-muted-foreground mb-0" style="font-size: 0.75rem;">
+                            @Model.City @Model.District · @Model.Street
+                        </p>
+                        <div class="d-flex align-items-center gap-2 mt-2">
+                            <span class="badge-status badge-status-@(Model.ContractType == MyRealEstate.Web.Models.Api.ContractType.Rent ? "info" : "gold")">
+                                @Model.ContractType?.ToArabic()
+                            </span>
+                            <span class="fw-bold text-primary" style="font-size: 1.1rem;">
+                                @(Model.Price?.ToString("N0") ?? "0") <span class="text-muted-foreground" style="font-size: 0.7rem;">ر.س</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Review groups -->
+                    <div class="card-sakan p-4 mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h4 class="fw-bold mb-0 text-foreground" style="font-size: 0.85rem;">البيانات الأساسية</h4>
+                            <a href="/owner/properties/new/step/1" class="btn btn-link btn-sm fw-bold p-0">تعديل</a>
+                        </div>
+                        <div class="row g-2">
+                            @foreach (var item in new[] {
+                                ("نوع العقار", Model.PropertyType?.ToArabic() ?? "—"),
+                                ("نوع العقد", Model.ContractType?.ToArabic() ?? "—"),
+                                ("الغرف", Model.Bedrooms?.ToString() ?? "—"),
+                                ("الحمامات", Model.Bathrooms?.ToString() ?? "—"),
+                                ("المساحة", Model.Area?.ToString("N0") + " م²"),
+                                ("الطوابق", Model.FloorsCount?.ToString() ?? "—")
+                            })
+                            {
+                                <div class="col-6">
+                                    <div class="d-flex justify-content-between rounded-4 bg-muted px-3 py-2">
+                                        <span class="text-muted-foreground">@item.Item1</span>
+                                        <span class="fw-bold text-foreground">@item.Item2</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="card-sakan p-4 mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h4 class="fw-bold mb-0 text-foreground" style="font-size: 0.85rem;">الموقع</h4>
+                            <a href="/owner/properties/new/step/2" class="btn btn-link btn-sm fw-bold p-0">تعديل</a>
+                        </div>
+                        <div class="row g-2">
+                            @foreach (var item in new[] {
+                                ("المدينة", Model.City),
+                                ("الحي", Model.District),
+                                ("الشارع", Model.Street),
+                                ("الرمز البريدي", Model.PostalCode ?? "—")
+                            })
+                            {
+                                <div class="col-6">
+                                    <div class="d-flex justify-content-between rounded-4 bg-muted px-3 py-2">
+                                        <span class="text-muted-foreground">@item.Item1</span>
+                                        <span class="fw-bold text-foreground">@item.Item2</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="card-sakan p-4 mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h4 class="fw-bold mb-0 text-foreground" style="font-size: 0.85rem;">المرافق (@Model.SelectedAmenityIds.Count)</h4>
+                            <a href="/owner/properties/new/step/3" class="btn btn-link btn-sm fw-bold p-0">تعديل</a>
+                        </div>
+                        @if (Model.SelectedAmenityIds.Count == 0)
+                        {
+                            <p class="text-muted-foreground mb-0" style="font-size: 0.75rem;">لم يتم اختيار مرافق.</p>
+                        }
+                        else
+                        {
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var a in Model.AmenityGroups.SelectMany(g => g.Items).Where(i => Model.SelectedAmenityIds.Contains(i.Id)))
+                                {
+                                    <span class="filter-pill"><i class="bi bi-check-lg text-success me-1"></i>@a.Name</span>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="card-sakan p-4 mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h4 class="fw-bold mb-0 text-foreground" style="font-size: 0.85rem;">الوسائط (@Model.MediaItems.Count صورة)</h4>
+                            <a href="/owner/properties/new/step/4" class="btn btn-link btn-sm fw-bold p-0">تعديل</a>
+                        </div>
+                        <div class="row g-2">
+                            @foreach (var m in Model.MediaItems)
+                            {
+                                <div class="col-lg-3 col-md-4 col-6"><img src="@m.Url" class="w-100 rounded-3" style="height: 72px; object-fit: cover;" alt="" loading="lazy" /></div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                    <!-- Publish readiness -->
+                    <div class="card-sakan p-4 mb-4">
+                        <h4 class="fw-bold mb-3 text-foreground" style="font-size: 0.85rem;">جاهزية النشر</h4>
+                        <div class="d-flex flex-column gap-2" style="font-size: 0.72rem;">
+                            @{
+                                var checks = new[] {
+                                    ("البيانات الأساسية", !string.IsNullOrWhiteSpace(Model.Title) && Model.Price is not null && Model.PropertyType is not null),
+                                    ("الموقع", !string.IsNullOrWhiteSpace(Model.City) && !string.IsNullOrWhiteSpace(Model.District)),
+                                    ("المرافق", Model.SelectedAmenityIds.Count > 0),
+                                    ("الصور (5+)", Model.MediaItems.Count >= 5),
+                                    ("الوصف", !string.IsNullOrWhiteSpace(Model.Description))
+                                };
+                            }
+                            @foreach (var c in checks)
+                            {
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="text-foreground">@c.Item1</span>
+                                    @if (c.Item2)
+                                    {
+                                        <span class="rounded-5 bg-success bg-opacity-25 text-success d-flex align-items-center justify-content-center" style="width: 20px; height: 20px;"><i class="bi bi-check-lg"></i></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="rounded-5 bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center" style="width: 20px; height: 20px;"><i class="bi bi-x-lg"></i></span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="sakan-progress mt-3"><div style="width: @(checks.Count(c => c.Item2) * 100 / checks.Length)%;"></div></div>
+                        <div class="text-muted-foreground mt-1" style="font-size: 0.65rem;">اكتمل @(checks.Count(c => c.Item2) * 100 / checks.Length)%</div>
+                    </div>
+
+                    <!-- Publish options -->
+                    <div class="card-sakan p-4 mb-4">
+                        <h4 class="fw-bold mb-3 text-foreground" style="font-size: 0.85rem;">خيارات النشر</h4>
+                        <label class="d-flex align-items-start gap-2 rounded-4 border border-primary bg-primary bg-opacity-10 p-3 mb-2 cursor-pointer">
+                            <span class="rounded-circle border-2 border-primary bg-primary d-inline-flex align-items-center justify-content-center mt-1" style="width: 16px; height: 16px;"></span>
+                            <div>
+                                <div class="fw-bold text-foreground" style="font-size: 0.75rem;">نشر فوري</div>
+                                <div class="text-muted-foreground" style="font-size: 0.68rem;">بعد موافقة الإدارة</div>
+                            </div>
+                        </label>
+                        <label class="d-flex align-items-start gap-2 rounded-4 border border-border p-3 cursor-pointer">
+                            <span class="rounded-circle border-2 border-muted-foreground d-inline-flex align-items-center justify-content-center mt-1" style="width: 16px; height: 16px;"></span>
+                            <div>
+                                <div class="fw-bold text-foreground" style="font-size: 0.75rem;">حفظ كمسودة</div>
+                                <div class="text-muted-foreground" style="font-size: 0.68rem;">للنشر لاحقاً</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <form method="post" action="/owner/properties/new/publish">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-gold w-100 fw-bold" style="font-size: 0.95rem;">نشر العقار</button>
+                    </form>
+                    <a href="/owner/properties/new/step/4" class="btn btn-outline w-100 mt-2">السابق</a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@* Delete media modals (step 4) *@
+@if (step == 4 && Model.PropertyId is not null)
+{
+    foreach (var m in Model.MediaItems)
+    {
+        @await Html.PartialAsync("_DeleteConfirmModal", new ViewDataDictionary(ViewData)
+        {
+            { "ModalId", $"deleteMediaModal-{m.Id}" },
+            { "FormAction", $"/owner/properties/{Model.PropertyId}/media/delete/{m.Id}?returnUrl=/owner/properties/new/step/4" },
+            { "ItemLabel", "الوسيط" }
+        })
+    }
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Type/contract selection chips → hidden field
+            document.querySelectorAll('[data-type-chip]').forEach(function (chip) {
+                chip.addEventListener('click', function () {
+                    var group = this.closest('div').parentElement; // container of chips
+                    var hidden = group.querySelector('input[type="hidden"]');
+                    group.querySelectorAll('[data-type-chip]').forEach(function (c) {
+                        c.classList.remove('active-primary', 'active-gold');
+                    });
+                    this.classList.add(this.dataset.tone === 'gold' ? 'active-gold' : 'active-primary');
+                    if (hidden) hidden.value = this.dataset.value;
+                });
+            });
+        });
+    </script>
+}
+
+@* Keep the WYSIWYG minimal: single form per step posts to Step controller. *@
