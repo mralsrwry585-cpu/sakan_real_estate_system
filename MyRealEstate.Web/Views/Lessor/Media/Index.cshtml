@@ -1,0 +1,93 @@
+@model MyRealEstate.Web.Models.Lessor.MediaViewModel
+@{
+    Layout = "_LayoutLessor";
+    ViewData["Title"] = "وسائط العقار";
+    ViewData["PageTitle"] = $"وسائط العقار — {Model.PropertyTitle}";
+    ViewData["PageSubtitle"] = "ارفع صوراً وفيديوهات عالية الجودة";
+    ViewData["TopbarAction"] = $"<a href=\"/owner/properties/{Model.PropertyId}\" class=\"btn btn-outline btn-sm fw-bold d-inline-flex align-items-center gap-1\"><i class=\"bi bi-arrow-right me-1\"></i> عودة للعقار</a>";
+}
+
+<div class="d-flex flex-column gap-4">
+    <!-- Upload zone -->
+    <div class="upload-zone" data-upload-zone>
+        <div class="mx-auto rounded-4 gradient-primary text-primary-foreground d-flex align-items-center justify-content-center" style="width: 64px; height: 64px; font-size: 1.8rem;">
+            <i class="bi bi-cloud-arrow-up"></i>
+        </div>
+        <h3 class="fw-bold mt-3 mb-1 text-foreground" style="font-size: 0.95rem;">اسحب الملفات هنا أو اضغط للرفع</h3>
+        <p class="text-muted-foreground mb-3" style="font-size: 0.72rem;">JPG · PNG · MP4 حتى 50 ميجابايت للملف الواحد</p>
+
+        <form method="post" action="/owner/properties/@Model.PropertyId/media/add" class="d-flex gap-2 justify-content-center flex-wrap">
+            @Html.AntiForgeryToken()
+            <input type="text" name="Url" class="form-control-sakan" style="max-width: 380px;" placeholder="الصق رابط الصورة https://..." required />
+            <button type="submit" class="btn btn-primary btn-sm fw-bold"><i class="bi bi-plus-lg me-1"></i>إضافة صورة من رابط</button>
+        </form>
+    </div>
+
+    <!-- Current media -->
+    <div>
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h3 class="fw-bold mb-0 text-foreground" style="font-size: 0.95rem;">الوسائط الحالية (@Model.TotalCount)</h3>
+            <span class="text-muted-foreground" style="font-size: 0.72rem;">اسحب لإعادة الترتيب • حدد صورة الغلاف</span>
+        </div>
+
+        @if (Model.Items.Count == 0)
+        {
+            <div class="card-sakan">
+                @await Html.PartialAsync("_EmptyState", new ViewDataDictionary(ViewData)
+                {
+                    { "Icon", "bi-images" },
+                    { "Title", "لا توجد وسائط بعد" },
+                    { "Message", "أضف صوراً باستخدام الرابط أعلاه." }
+                })
+            </div>
+        }
+        else
+        {
+            <div class="row g-3" data-media-grid data-property-id="@Model.PropertyId">
+                @foreach (var m in Model.Items)
+                {
+                    <div class="col-6 col-md-4 col-lg-3" data-media-item="@m.Id">
+                        <div class="position-relative rounded-4 overflow-hidden border border-border shadow-card group">
+                            <img src="@m.Url" class="w-100" style="height: 140px; object-fit: cover;" alt="" loading="lazy" />
+                            @if (m.IsCover)
+                            {
+                                <span class="badge-status badge-status-gold position-absolute top-0 start-0 m-2">الغلاف</span>
+                            }
+                            else
+                            {
+                                <span class="badge-status badge-status-neutral position-absolute top-0 start-0 m-2"><i class="bi bi-image me-1"></i>صورة</span>
+                            }
+                            <div class="position-absolute inset-x-0 bottom-0 d-flex justify-content-between gap-1 p-2"
+                                 style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);">
+                                @if (!m.IsCover)
+                                {
+                                    <form method="post" action="/owner/properties/@Model.PropertyId/media/cover">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="mediaId" value="@m.Id" />
+                                        <button type="submit" class="btn btn-light btn-sm fw-bold" style="font-size: 0.65rem;">الغلاف</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="btn btn-light btn-sm fw-bold disabled" style="font-size: 0.65rem;">الغلاف</span>
+                                }
+                                <button type="button" class="btn btn-danger btn-sm fw-bold" style="font-size: 0.65rem;"
+                                        data-open-modal="deleteMediaModal-@m.Id">حذف</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@foreach (var m in Model.Items)
+{
+    @await Html.PartialAsync("_DeleteConfirmModal", new ViewDataDictionary(ViewData)
+    {
+        { "ModalId", $"deleteMediaModal-{m.Id}" },
+        { "FormAction", $"/owner/properties/{Model.PropertyId}/media/delete/{m.Id}?returnUrl=/owner/properties/{Model.PropertyId}/media" },
+        { "ItemLabel", "الوسيط" }
+    })
+}
