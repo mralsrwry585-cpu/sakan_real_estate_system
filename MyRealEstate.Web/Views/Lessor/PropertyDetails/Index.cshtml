@@ -1,0 +1,153 @@
+@model MyRealEstate.Web.Models.Lessor.PropertyDetailsViewModel
+@using MyRealEstate.Web.Helpers
+@{
+    Layout = "_LayoutLessor";
+    ViewData["Title"] = Model.Property.Title;
+    ViewData["PageTitle"] = Model.Property.Title;
+    ViewData["PageSubtitle"] = "عرض تفاصيل العقار وإدارته";
+    ViewData["TopbarAction"] = $"<a href=\"/owner/properties\" class=\"btn btn-outline btn-sm fw-bold d-inline-flex align-items-center gap-1\"><i class=\"bi bi-arrow-right me-1\"></i> عقاراتي</a><a href=\"/owner/properties/{Model.Property.Id}/media\" class=\"btn btn-outline btn-sm fw-bold d-inline-flex align-items-center gap-1\"><i class=\"bi bi-images me-1\"></i> الوسائط</a>";
+}
+
+<div class="row g-4">
+    <div class="col-12 col-xl-8">
+        <div class="d-flex flex-column gap-4">
+            <!-- Gallery -->
+            <div class="card-sakan overflow-hidden p-2">
+                @if (!string.IsNullOrWhiteSpace(Model.CoverUrl))
+                {
+                    <img src="@Model.CoverUrl" class="w-100 rounded-4" style="height: 300px; object-fit: cover;" alt="@Model.Property.Title" />
+                }
+                else
+                {
+                    <div class="w-100 rounded-4 bg-muted d-flex align-items-center justify-content-center" style="height: 300px;">
+                        <i class="bi bi-buildings text-muted-foreground" style="font-size: 3rem;"></i>
+                    </div>
+                }
+                @if (Model.Gallery.Count > 1)
+                {
+                    <div class="row g-2 mt-2">
+                        @foreach (var g in Model.Gallery.Skip(1).Take(4))
+                        {
+                            <div class="col-3">
+                                <img src="@g.Url" class="w-100 rounded-3" style="height: 80px; object-fit: cover;" alt="" loading="lazy" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Description -->
+            <div class="card-sakan p-4">
+                <h3 class="fw-bold mb-3 text-foreground" style="font-size: 0.9rem;">الوصف</h3>
+                <p class="text-muted-foreground mb-0" style="font-size: 0.8rem; line-height: 1.9;">
+                    @(string.IsNullOrWhiteSpace(Model.Property.Description) ? "لا يوجد وصف لهذا العقار." : Model.Property.Description)
+                </p>
+
+                <div class="row g-3 mt-3 text-center">
+                    <div class="col-6 col-md-3">
+                        <div class="rounded-4 bg-muted p-3">
+                            <div class="fw-bold text-primary" style="font-size: 1.1rem;">@Model.Property.Bedrooms</div>
+                            <div class="text-muted-foreground" style="font-size: 0.68rem;">غرف</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="rounded-4 bg-muted p-3">
+                            <div class="fw-bold text-primary" style="font-size: 1.1rem;">@Model.Property.Bathrooms</div>
+                            <div class="text-muted-foreground" style="font-size: 0.68rem;">حمامات</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="rounded-4 bg-muted p-3">
+                            <div class="fw-bold text-primary" style="font-size: 1.1rem;">@Model.Property.Area.ToString("N0")<span class="text-muted-foreground" style="font-size: 0.65rem;">م²</span></div>
+                            <div class="text-muted-foreground" style="font-size: 0.68rem;">المساحة</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="rounded-4 bg-muted p-3">
+                            <div class="fw-bold text-primary" style="font-size: 1.1rem;">@Model.Property.FloorsCount</div>
+                            <div class="text-muted-foreground" style="font-size: 0.68rem;">الطوابق</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Amenities -->
+            <div class="card-sakan p-4">
+                <h3 class="fw-bold mb-3 text-foreground" style="font-size: 0.9rem;">المرافق</h3>
+                @if (Model.AmenityNames.Count == 0)
+                {
+                    <p class="text-muted-foreground mb-0" style="font-size: 0.75rem;">لا توجد مرافق مسجلة لهذا العقار.</p>
+                }
+                else
+                {
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var name in Model.AmenityNames)
+                        {
+                            <span class="filter-pill"><i class="bi bi-check-lg text-success me-1"></i>@name</span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+        <div class="d-flex flex-column gap-4">
+            <!-- Price + stats -->
+            <div class="card-sakan p-4">
+                <div class="text-muted-foreground" style="font-size: 0.72rem;">السعر</div>
+                <div class="fw-bold text-primary" style="font-size: 1.6rem;">@Model.PriceLabel <span class="text-muted-foreground" style="font-size: 0.7rem;">ر.س</span></div>
+                <span class="badge-status badge-status-@(Model.Property.ContractType == MyRealEstate.Web.Models.Api.ContractType.Rent ? "info" : "gold") mt-2">@Model.ContractLabel</span>
+
+                <div class="rounded-4 bg-muted p-3 mt-3 d-flex flex-column gap-2" style="font-size: 0.75rem;">
+                    <div class="d-flex justify-content-between"><span class="text-muted-foreground">المشاهدات</span><span class="fw-bold text-foreground">@Model.Property.Views</span></div>
+                    <div class="d-flex justify-content-between"><span class="text-muted-foreground">المفضلة</span><span class="fw-bold text-foreground">@Model.Property.FavoritesCount</span></div>
+                    <div class="d-flex justify-content-between"><span class="text-muted-foreground">طلبات المعاينة</span><span class="fw-bold text-foreground">@Model.Property.ViewingRequestsCount</span></div>
+                    <div class="d-flex justify-content-between"><span class="text-muted-foreground">طلبات الحجز</span><span class="fw-bold text-foreground">@Model.Property.BookingRequestsCount</span></div>
+                </div>
+            </div>
+
+            <!-- Status change -->
+            <div class="card-sakan p-4">
+                <div class="field-label mb-2">حالة العقار</div>
+                <form method="post" action="/owner/properties/@Model.Property.Id/set-status">
+                    @Html.AntiForgeryToken()
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var opt in Model.StatusOptions)
+                        {
+                            <label class="d-flex align-items-center justify-content-between rounded-4 border px-3 py-2 cursor-pointer @(opt.IsCurrent ? "border-primary" : "border-border")" style="font-size: 0.72rem; font-weight: 700;">
+                                <span class="d-flex align-items-center gap-2">
+                                    <input type="radio" name="Status" value="@((int)opt.Status)" class="form-check-input mt-0 @(opt.IsCurrent ? "bg-primary border-primary" : "")" @(opt.IsCurrent ? "checked" : "") />
+                                    @opt.Label
+                                </span>
+                                <span class="badge-status badge-status-@opt.Tone">@opt.Label</span>
+                            </label>
+                        }
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-3 fw-bold">تحديث الحالة</button>
+                </form>
+            </div>
+
+            <!-- Address -->
+            <div class="card-sakan p-4">
+                <div class="field-label mb-2">العنوان</div>
+                @if (Model.Property.Address is not null)
+                {
+                    <div class="text-muted-foreground" style="font-size: 0.75rem; line-height: 1.9;">
+                        حي @Model.Property.Address.District، @Model.Property.Address.City<br />
+                        @Model.Property.Address.Street
+                    </div>
+                    <div class="map-placeholder mt-3 d-flex align-items-center justify-content-center" style="min-height: 140px;">
+                        <div class="rounded-circle bg-danger shadow-elegant d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                            <i class="bi bi-geo-alt-fill text-white" style="font-size: 0.8rem;"></i>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted-foreground mb-0" style="font-size: 0.75rem;">لم يتم تحديد عنوان بعد.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
