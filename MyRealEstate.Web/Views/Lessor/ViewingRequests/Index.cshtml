@@ -1,0 +1,195 @@
+@model MyRealEstate.Web.Models.Lessor.ViewingRequestsViewModel
+@using MyRealEstate.Web.Models.Api
+@using MyRealEstate.Web.Helpers
+@{
+    Layout = "_LayoutLessor";
+    ViewData["Title"] = "طلبات المعاينة";
+    ViewData["PageTitle"] = "طلبات المعاينة";
+    ViewData["PageSubtitle"] = "جدول المواعيد وتأكيد المعاينات";
+    var baseUrl = "/owner/requests/viewings";
+
+    string FilterLink(string label)
+    {
+        if (label == "الكل") return baseUrl;
+        var enumValue = label switch
+        {
+            "قيد المراجعة" => (int)ViewingStatus.Pending,
+            "مقبول" => (int)ViewingStatus.Approved,
+            "مرفوض" => (int)ViewingStatus.Rejected,
+            "مكتمل" => (int)ViewingStatus.Completed,
+            "ملغى" => (int)ViewingStatus.Cancelled,
+            _ => -1
+        };
+        return $"{baseUrl}?status={enumValue}";
+    }
+}
+
+<div class="d-flex flex-column gap-4">
+    <!-- Stats -->
+    <div class="row g-3">
+        @foreach (var stat in Model.Stats)
+        {
+            <div class="col-12 col-sm-6 col-xl-3">
+                @await Html.PartialAsync("_StatCard", stat)
+            </div>
+        }
+    </div>
+
+    <!-- Filters -->
+    <div class="d-flex flex-wrap gap-2">
+        @foreach (var f in Model.Filters)
+        {
+            <a href="@FilterLink(f.Label)" class="filter-pill @(f.IsActive ? "active" : "")">@f.Label <span class="opacity-75">(@f.Count)</span></a>
+        }
+    </div>
+
+    <!-- Table -->
+    <div class="card-sakan overflow-hidden">
+        @if (Model.Items.Count == 0)
+        {
+            <div class="empty-state">
+                <div class="empty-icon"><i class="bi bi-eye"></i></div>
+                <h4 class="fw-bold mb-0">لا توجد طلبات معاينة</h4>
+                <p class="text-muted-foreground mb-0">ستظهر هنا طلبات المعاينة من المستأجرين فور وصولها.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table-sakan mb-0" id="viewingsTable">
+                    <thead>
+                        <tr>
+                            <th>الرقم</th>
+                            <th>العقار</th>
+                            <th>المستأجر</th>
+                            <th>التاريخ المقترح</th>
+                            <th>الوقت</th>
+                            <th>الحالة</th>
+                            <th class="text-start">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.Items)
+                        {
+                            <tr>
+                                <td class="fw-bold text-foreground ltr">#@r.Number</td>
+                                <td class="text-foreground">@r.PropertyTitle</td>
+                                <td class="text-muted-foreground">@r.TenantName</td>
+                                <td class="text-muted-foreground ltr">@r.DateLabel</td>
+                                <td class="text-muted-foreground">@r.RequestedTime</td>
+                                <td><span class="badge-status badge-status-@r.Tone">@r.StatusLabel</span></td>
+                                <td class="text-start">
+                                    <div class="d-inline-flex gap-1">
+                                        @if (r.Status == ViewingStatus.Pending)
+                                        {
+                                            <button type="button" class="btn btn-success btn-sm fw-bold"
+                                                    data-open-modal="acceptViewing-@r.Id">تأكيد</button>
+                                            <button type="button" class="btn btn-danger btn-sm fw-bold"
+                                                    data-open-modal="rejectViewing-@r.Id">رفض</button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-outline btn-sm fw-bold"
+                                                    data-open-modal="viewViewing-@r.Id">التفاصيل</button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@* Accept modals *@
+@foreach (var r in Model.Items.Where(i => i.Status == ViewingStatus.Pending))
+{
+    @await Html.PartialAsync("_AcceptViewingModal", new ViewDataDictionary(ViewData)
+    {
+        { "ModalId", $"acceptViewing-{r.Id}" },
+        { "RequestNumber", $"VW-{r.Id.ToString("N")[..5].ToUpperInvariant()}" },
+        { "TenantName", r.TenantName },
+        { "PropertyTitle", r.PropertyTitle },
+        { "DateLabel", $"{r.DateLabel} — {r.RequestedTime}" },
+        { "TenantMobile", r.Note ?? "" },
+        { "FormAction", $"/owner/requests/viewings/accept/{r.Id}" }
+    })
+}
+
+@* Reject modals (pending only) *@
+@foreach (var r in Model.Items.Where(i => i.Status == ViewingStatus.Pending))
+{
+    <div class="sakan-modal-backdrop" id="rejectViewing-@r.Id" data-modal>
+        <div class="sakan-modal">
+            <div class="modal-header-sakan">
+                <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;"><i class="bi bi-x-circle"></i></div>
+                <div>
+                    <h5 class="fw-bold mb-0">رفض طلب المعاينة</h5>
+                    <div class="opacity-75" style="font-size: 0.72rem;" dir="ltr">#@r.Number • @r.TenantName</div>
+                </div>
+            </div>
+            <form method="post" action="/owner/requests/viewings/reject/@r.Id">
+                @Html.AntiForgeryToken()
+                <div class="modal-body-sakan">
+                    <div class="mb-3">
+                        <div class="field-label">ملاحظة للمستأجر (اختياري)</div>
+                        <textarea name="ownerResponseNote" rows="3" class="form-control-sakan" placeholder="نعتذر، الموعد غير متاح حالياً."></textarea>
+                    </div>
+                    <div class="alert-sakan-danger mb-0">سيتم إشعار المستأجر برفض الطلب.</div>
+                </div>
+                <div class="modal-footer-sakan">
+                    <button type="button" class="btn btn-outline" data-modal-close>إلغاء</button>
+                    <button type="submit" class="btn btn-danger fw-bold">تأكيد الرفض</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@* Details modals (non-pending) *@
+@foreach (var r in Model.Items.Where(i => i.Status != ViewingStatus.Pending))
+{
+    <div class="sakan-modal-backdrop" id="viewViewing-@r.Id" data-modal>
+        <div class="sakan-modal">
+            <div class="modal-header-sakan">
+                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;"><i class="bi bi-eye"></i></div>
+                <div>
+                    <h5 class="fw-bold mb-0">تفاصيل طلب المعاينة</h5>
+                    <div class="opacity-75" style="font-size: 0.72rem;" dir="ltr">#@r.Number • @r.TenantName</div>
+                </div>
+            </div>
+            <div class="modal-body-sakan">
+                <div class="rounded-3 bg-muted p-3 mb-3" style="font-size: 0.75rem;">
+                    <div class="d-flex justify-content-between mb-1"><span class="text-muted-foreground">العقار</span><span class="fw-bold text-foreground">@r.PropertyTitle</span></div>
+                    <div class="d-flex justify-content-between mb-1"><span class="text-muted-foreground">التاريخ</span><span class="fw-bold text-foreground" dir="ltr">@r.DateLabel</span></div>
+                    <div class="d-flex justify-content-between"><span class="text-muted-foreground">الوقت</span><span class="fw-bold text-foreground">@r.RequestedTime</span></div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(r.OwnerResponseNote))
+                {
+                    <div class="alert-sakan-info mb-0">@r.OwnerResponseNote</div>
+                }
+            </div>
+            <div class="modal-footer-sakan">
+                <button type="button" class="btn btn-outline" data-modal-close>إغلاق</button>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var el = document.getElementById('viewingsTable');
+            if (el && window.jQuery && window.jQuery.fn && window.jQuery.fn.DataTable && el.querySelectorAll('tbody tr').length > 0) {
+                jQuery(el).DataTable({
+                    language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/ar.json' },
+                    dom: 'rt<"d-flex justify-content-between align-items-center mt-3"ip>',
+                    pageLength: 10,
+                    order: []
+                });
+            }
+        });
+    </script>
+}
