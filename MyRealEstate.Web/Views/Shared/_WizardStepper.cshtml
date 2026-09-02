@@ -1,0 +1,38 @@
+@{
+    var current = (int)(ViewData["WizardStep"] ?? 1);
+    var steps = new[]
+    {
+        new { Num = 1, Label = "البيانات الأساسية" },
+        new { Num = 2, Label = "الموقع والعنوان" },
+        new { Num = 3, Label = "المرافق" },
+        new { Num = 4, Label = "الوسائط" },
+        new { Num = 5, Label = "المراجعة" }
+    };
+}
+
+<ol class="wizard-stepper list-unstyled d-flex align-items-center justify-content-between mb-4">
+    @for (var i = 0; i < steps.Length; i++)
+    {
+        var s = steps[i];
+        var state = current > s.Num ? "done" : current == s.Num ? "current" : "upcoming";
+        <li class="wizard-step @state d-flex align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <span class="step-dot">
+                    @if (state == "done")
+                    {
+                        <i class="bi bi-check-lg"></i>
+                    }
+                    else
+                    {
+                        @s.Num
+                    }
+                </span>
+                <span class="step-label d-none d-sm-inline">@s.Label</span>
+            </div>
+            @if (i < steps.Length - 1)
+            {
+                <span class="step-line"></span>
+            }
+        </li>
+    }
+</ol>
