@@ -1,0 +1,59 @@
+@{
+    var modalId = ViewData["ModalId"]?.ToString() ?? "acceptViewingModal";
+    var requestNumber = ViewData["RequestNumber"]?.ToString() ?? "";
+    var tenantName = ViewData["TenantName"]?.ToString() ?? "";
+    var propertyTitle = ViewData["PropertyTitle"]?.ToString() ?? "";
+    var dateLabel = ViewData["DateLabel"]?.ToString() ?? "";
+    var tenantMobile = ViewData["TenantMobile"]?.ToString() ?? "";
+    var formAction = ViewData["FormAction"]?.ToString() ?? "";
+}
+<div class="sakan-modal-backdrop" id="@modalId" data-modal>
+    <div class="sakan-modal modal-lg">
+        <div class="modal-header-sakan modal-header-gradient">
+            <div class="rounded-circle bg-white d-flex align-items-center justify-content-center bg-opacity-25 flex-shrink-0" style="width: 44px; height: 44px;">
+                <i class="bi bi-eye"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold mb-0">تأكيد موعد المعاينة</h5>
+                <div class="opacity-75" style="font-size: 0.72rem;" dir="ltr">@requestNumber • @tenantName</div>
+            </div>
+        </div>
+        <form method="post" action="@formAction">
+            @Html.AntiForgeryToken()
+            <div class="modal-body-sakan">
+                <div class="rounded-3 bg-muted p-3 mb-4" style="font-size: 0.75rem;">
+                    <div class="d-flex justify-content-between mb-1"><span class="text-muted-foreground">العقار</span><span class="fw-bold text-foreground">@propertyTitle</span></div>
+                    <div class="d-flex justify-content-between mb-1"><span class="text-muted-foreground">التاريخ المقترح</span><span class="fw-bold text-foreground" dir="ltr">@dateLabel</span></div>
+                    @if (!string.IsNullOrWhiteSpace(tenantMobile))
+                    {
+                        <div class="d-flex justify-content-between"><span class="text-muted-foreground">هاتف المستأجر</span><span class="fw-bold text-foreground" dir="ltr">@tenantMobile</span></div>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <div class="field-label">تعديل الموعد (اختياري)</div>
+                    <div class="row g-2">
+                        @foreach (var slot in new[] { "11:00 ص", "01:00 م", "04:30 م", "06:00 م" })
+                        {
+                            <div class="col-6 col-sm-3">
+                                <button type="button" class="type-chip w-100" data-time-slot>@slot</button>
+                            </div>
+                        }
+                    </div>
+                    <input type="hidden" name="RequestedTime" id="RequestedTime" value="" />
+                </div>
+
+                <div class="mb-3">
+                    <div class="field-label">ملاحظة للمستأجر</div>
+                    <textarea name="OwnerResponseNote" rows="3" class="form-control-sakan" placeholder="في انتظارك عند البوابة الرئيسية، يرجى الاتصال قبل الوصول بـ 15 دقيقة."></textarea>
+                </div>
+
+                <div class="alert-sakan-info mb-0">سيتم إرسال إشعار فوري للمستأجر وتحديث تقويم المعاينات.</div>
+            </div>
+            <div class="modal-footer-sakan">
+                <button type="button" class="btn btn-outline" data-modal-close>إلغاء</button>
+                <button type="submit" class="btn btn-success px-4 fw-bold shadow-card">تأكيد المعاينة</button>
+            </div>
+        </form>
+    </div>
+</div>
