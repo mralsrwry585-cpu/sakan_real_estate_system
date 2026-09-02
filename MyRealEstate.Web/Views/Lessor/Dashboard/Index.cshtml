@@ -1,0 +1,221 @@
+@model MyRealEstate.Web.Models.Lessor.DashboardViewModel
+@{
+    Layout = "_LayoutLessor";
+    ViewData["Title"] = "لوحة القيادة";
+    ViewData["PageTitle"] = "لوحة القيادة";
+    ViewData["PageSubtitle"] = "نظرة سريعة على أداء عقاراتك اليوم";
+    ViewData["TopbarAction"] = "<a href=\"/owner/properties/new\" class=\"btn btn-primary btn-sm fw-bold d-inline-flex align-items-center gap-1\"><i class=\"bi bi-plus-lg\"></i> إضافة عقار</a>";
+    var maxTrend = Model.MonthlyTrends.Count == 0 ? 0 : Model.MonthlyTrends.Max(t => t.Value);
+}
+
+<div class="d-flex flex-column gap-4">
+    <!-- Stats -->
+    <div class="row g-3">
+        @foreach (var stat in Model.Stats)
+        {
+            <div class="col-12 col-sm-6 col-xl-3">
+                @await Html.PartialAsync("_StatCard", stat)
+            </div>
+        }
+    </div>
+
+    <!-- Charts row -->
+    <div class="row g-4">
+        <!-- Views trend chart -->
+        <div class="col-12 col-xl-8">
+            <div class="card-sakan p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h3 class="h6 fw-bold mb-0 text-foreground">مشاهدات العقارات — آخر 30 يوم</h3>
+                        <p class="text-muted-foreground mb-0 mt-1" style="font-size: 0.72rem;">
+                            إجمالي @(Model.Stats.Count > 3 ? Model.Stats[3].Value : "0") مشاهدة
+                        </p>
+                    </div>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="الفترة">
+                        <button type="button" class="btn btn-outline">أسبوع</button>
+                        <button type="button" class="btn btn-primary fw-bold">شهر</button>
+                        <button type="button" class="btn btn-outline">3 أشهر</button>
+                    </div>
+                </div>
+
+                @if (Model.MonthlyTrends.Count == 0 || maxTrend == 0)
+                {
+                    <div class="d-flex align-items-center justify-content-center" style="min-height: 220px;">
+                        <div class="text-center">
+                            <i class="bi bi-graph-up text-muted-foreground" style="font-size: 2.5rem;"></i>
+                            <p class="text-muted-foreground mt-2 mb-0" style="font-size: 0.78rem;">لا توجد بيانات مشاهدات بعد — ستظهر فور وصول الزيارات.</p>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="position-relative" style="height: 220px;" id="trendChartContainer">
+                        <!-- Inline SVG line/area chart generated from real monthly data -->
+                        <svg viewBox="0 0 600 200" class="w-100 h-100" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="rgba(15,118,110,0.32)" />
+                                    <stop offset="100%" stop-color="rgba(15,118,110,0)" />
+                                </linearGradient>
+                            </defs>
+                            @{
+                                var n = Model.MonthlyTrends.Count;
+                                var (path, fillPath, points) = BuildTrendCurve(Model.MonthlyTrends, maxTrend);
+                            }
+                            <path d="@fillPath" fill="url(#trendFill)" />
+                            <path d="@path" fill="none" stroke="#0f766e" stroke-width="2.5" stroke-linecap="round" />
+                            @foreach (var pt in points)
+                            {
+                                <circle cx="@pt.Item1" cy="@pt.Item2" r="4" fill="#0f766e" stroke="#fff" stroke-width="2">
+                                    <title>@pt.Item3</title>
+                                </circle>
+                            }
+                        </svg>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2" style="font-size: 0.68rem; color: var(--muted-foreground);">
+                        @foreach (var t in Model.MonthlyTrends)
+                        {
+                            <span>@t.Label</span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Status distribution -->
+        <div class="col-12 col-xl-4">
+            <div class="card-sakan p-4 h-100">
+                <h3 class="h6 fw-bold mb-4 text-foreground">توزيع حالة العقارات</h3>
+                @if (Model.StatusBreakdown.Count == 0)
+                {
+                    <div class="d-flex align-items-center justify-content-center" style="min-height: 180px;">
+                        <p class="text-muted-foreground mb-0" style="font-size: 0.78rem;">لا توجد عقارات بعد.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var s in Model.StatusBreakdown)
+                        {
+                            <div>
+                                <div class="d-flex justify-content-between mb-1" style="font-size: 0.72rem; font-weight: 700; color: var(--foreground);">
+                                    <span>@s.Label</span><span>@s.Count</span>
+                                </div>
+                                <div class="sakan-progress">
+                                    <div style="width: @s.Percentage%; background: @s.Color;"></div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent requests -->
+    <div class="card-sakan overflow-hidden">
+        <div class="card-header-sakan">
+            <h3 class="h6 fw-bold mb-0 text-foreground">آخر الطلبات</h3>
+            <a href="/owner/requests/bookings" class="btn btn-link btn-sm fw-bold p-0">عرض الكل</a>
+        </div>
+        @if (Model.RecentRequests.Count == 0)
+        {
+            <div class="empty-state">
+                <div class="empty-icon"><i class="bi bi-inbox"></i></div>
+                <h4 class="fw-bold mb-0">لا توجد طلبات بعد</h4>
+                <p class="text-muted-foreground mb-0">ستظهر هنا طلبات المعاينة والحجز فور وصولها.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table-sakan mb-0">
+                    <thead>
+                        <tr>
+                            <th>رقم الطلب</th>
+                            <th>النوع</th>
+                            <th>العقار</th>
+                            <th>المستأجر</th>
+                            <th>التاريخ</th>
+                            <th>الحالة</th>
+                            <th class="text-start">التفاصيل</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.RecentRequests)
+                        {
+                            <tr>
+                                <td class="fw-bold text-foreground ltr">#@r.Number</td>
+                                <td class="text-muted-foreground">@r.Type</td>
+                                <td class="text-foreground">@r.PropertyName</td>
+                                <td class="text-muted-foreground">@r.UserName</td>
+                                <td class="text-muted-foreground">@r.Date</td>
+                                <td><span class="badge-status badge-status-@r.Tone">@r.Status</span></td>
+                                <td class="text-start">
+                                    <a href="/owner/requests/@(r.Type == "حجز" ? "bookings" : "viewings")" class="btn btn-link btn-sm fw-bold p-0">التفاصيل</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Chart could be enhanced with a lightweight library; core trend is rendered server-side.
+        });
+    </script>
+}
+
+@functions {
+    private (
+        string path,
+        string fillPath,
+        List<(double X, double Y, string Label)> points)
+        BuildTrendCurve(
+        System.Collections.Generic.List<MyRealEstate.Web.Models.Lessor.MonthlyTrendViewModel> trends,
+        int maxValue)
+    {
+        var width = 600.0;
+        var height = 200.0;
+        var padX = 12.0;
+        var padY = 16.0;
+        var n = trends.Count;
+        if (n == 0) return (string.Empty, string.Empty, new List<(double, double, string)>());
+
+        var step = (width - 2 * padX) / (n - 1);
+        var scale = maxValue > 0 ? (height - 2 * padY) / (double)maxValue : 1;
+
+        var pts = new List<(double X, double Y, string Label)>();
+        for (var i = 0; i < n; i++)
+        {
+            var x = padX + i * step;
+            var y = height - padY - trends[i].Value * scale;
+            pts.Add((x, y, $"{trends[i].Label}: {trends[i].Value}"));
+        }
+
+        // Smooth curve via quadratic/cubic approximation
+        var pathBuilder = new System.Text.StringBuilder($"M {pts[0].X.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)} {pts[0].Y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)}");
+        for (var i = 1; i < pts.Count; i++)
+        {
+            var p0 = pts[i - 1];
+            var p1 = pts[i];
+            var midX = (p0.X + p1.X) / 2;
+            pathBuilder.Append(" C ")
+                .Append(midX.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)).Append(' ')
+                .Append(p0.Y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)).Append(' ')
+                .Append(midX.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)).Append(' ')
+                .Append(p1.Y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)).Append(' ')
+                .Append(p1.X.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)).Append(' ')
+                .Append(p1.Y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture));
+        }
+        var linePath = pathBuilder.ToString();
+        var fillPath = linePath + $" L {pts[^1].X.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)} 200 L {pts[0].X.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)} 200 Z";
+
+        return (linePath, fillPath, pts);
+    }
+}
