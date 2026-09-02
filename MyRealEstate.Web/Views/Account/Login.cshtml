@@ -1,0 +1,53 @@
+@model MyRealEstate.Web.Models.Account.LoginViewModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "تسجيل الدخول";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-5">
+            <div class="stat-card shadow-elegant p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div class="mx-auto rounded-4 gradient-primary text-primary-foreground fw-bold d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; font-size: 1.6rem;">س</div>
+                    <h2 class="h4 fw-bold mb-1">تسجيل الدخول للمالك</h2>
+                    <p class="text-muted-foreground mb-0">مرحباً بعودتك! أدخل بياناتك للوصول إلى لوحة التحكم.</p>
+                </div>
+
+                @if (TempData["Registered"] is string registeredMsg)
+                {
+                    <div class="alert alert-sakan-success mb-4" role="alert">
+                        <i class="bi bi-check-circle-fill me-1"></i> @registeredMsg
+                    </div>
+                }
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-sakan-danger mb-4" role="alert"></div>
+
+                <form asp-action="Login" method="post">
+                    <input type="hidden" asp-for="ReturnUrl" />
+                    <div class="mb-3">
+                        <label class="form-label fw-bold" asp-for="Email">البريد الإلكتروني</label>
+                        <input asp-for="Email" class="form-control form-control-sakan" placeholder="name@example.com" dir="ltr" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold" asp-for="Password">كلمة المرور</label>
+                        <input asp-for="Password" type="password" class="form-control form-control-sakan" placeholder="••••••••" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+                    <div class="text-end mb-4">
+                        <a href="#" class="small text-primary fw-bold">نسيت كلمة المرور؟</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> تسجيل الدخول
+                    </button>
+                </form>
+
+                <div class="text-center mt-4 small text-muted-foreground">
+                    ليس لديك حساب؟
+                    <a asp-action="Register" class="text-primary fw-bold">إنشاء حساب مالك</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

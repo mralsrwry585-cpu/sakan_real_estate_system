@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="SAKAN.API/SAKAN.API.csproj" />
+  <Project Path="SAKAN.Application/SAKAN.Application.csproj" />
+  <Project Path="SAKAN.Domain/SAKAN.Domain.csproj" />
+  <Project Path="SAKAN.Infrastructure/SAKAN.Infrastructure.csproj" />
+  <Project Path="MyRealEstate.Web/MyRealEstate.Web.csproj" />
+</Solution>

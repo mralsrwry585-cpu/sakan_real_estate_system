@@ -1,0 +1,25 @@
+@model MyRealEstate.Web.Models.Lessor.StatCardViewModel
+@{
+    var icon = Model.Icon switch
+    {
+        "build" => "bi-buildings",
+        "eye" => "bi-eye",
+        "cal" => "bi-calendar-check",
+        "money" => "bi-cash-stack",
+        "bell" => "bi-bell",
+        "check" => "bi-check-circle",
+        "x" => "bi-x-circle",
+        _ => "bi-grid"
+    };
+}
+<div class="stat-card h-100">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="fw-bold text-foreground" style="font-size: 0.78rem;">@Model.Title</div>
+        <div class="stat-icon stat-icon-@Model.Tone"><i class="bi @icon"></i></div>
+    </div>
+    <div class="stat-value">@Model.Value</div>
+    @if (!string.IsNullOrWhiteSpace(Model.Delta))
+    {
+        <div class="stat-delta">@Model.Delta</div>
+    }
+</div>

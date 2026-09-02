@@ -1,0 +1,46 @@
+@using MyRealEstate.Web.Helpers
+@{
+    var ownerName = Context.Session.GetOwnerName() ?? "المالك";
+    var initials = ownerName.Length > 2 ? ownerName[..2] : ownerName;
+}
+
+<header class="sakan-topbar">
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-icon d-lg-none" data-sidebar-toggle><i class="bi bi-list"></i></button>
+        <div>
+            <h1 class="h5 fw-bold mb-0 text-foreground">@ViewData["PageTitle"]</h1>
+            @if (ViewData["PageSubtitle"] is string subtitle && !string.IsNullOrWhiteSpace(subtitle))
+            {
+                <div class="text-muted-foreground" style="font-size: 0.72rem;">@subtitle</div>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+        @if (ViewData["TopbarAction"] is string topbarAction)
+        {
+            @Html.Raw(topbarAction)
+        }
+        <div class="search-box d-none d-md-flex">
+            <i class="bi bi-search"></i>
+            <input type="text" placeholder="ابحث في العقارات، الطلبات..." />
+        </div>
+        <button class="btn btn-icon position-relative">
+            <i class="bi bi-bell"></i>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">5</span>
+        </button>
+        <form method="post" action="/Account/Logout" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-icon" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+                <i class="bi bi-box-arrow-right"></i>
+            </button>
+        </form>
+        <div class="user-chip">
+            <div class="rounded-circle gradient-gold text-gold-foreground d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width: 32px; height: 32px; font-size: 0.72rem;">@initials</div>
+            <div class="d-none d-sm-block">
+                <div class="fw-bold text-foreground" style="font-size: 0.72rem;">@ownerName</div>
+                <div class="text-muted-foreground" style="font-size: 0.66rem;">مالك عقارات</div>
+            </div>
+        </div>
+    </div>
+</header>
